@@ -6,34 +6,40 @@ from PIL import Image
 import os
 import urllib.request
 
-MODEL_URL = "https://drive.google.com/file/d/1PUxOsAbMjrb8H5zZmRksWTcgzFzOiIfA/view?usp=sharing"
+MODEL_URL = "https://github.com/Barkha1013/Deepfake-Face-Detection/releases/download/v1.0/deepfake_model.pth"
 MODEL_PATH = "deepfake_model.pth"
 
-# 1. Automatically download model if missing and load it
 @st.cache_resource
 def load_model():
-    if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading model weights from GitHub Release... Please wait."):
-            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-            
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
+        with st.spinner("Downloading model weights... Please wait."):
+            try:
+                urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+            except Exception as e:
+                st.error(f"Download failed: {e}")
+                
+    # Initialize architecture
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
     
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
+    try:
+        model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
+    except Exception as e:
+        st.error(f"Error loading model weights: {e}. The downloaded file might be corrupted or an HTML page.")
+        
     model.eval()
     return model
 
 model = load_model()
 
-# 2. Define Image Preprocessing Transformations
+# Preprocessing & App UI
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# 3. Streamlit Web App Interface Layout
 st.title("🛡️ Deepfake Face Detection System")
 st.write("Upload a facial image to check whether it is **Real** or a **Deepfake** using your trained PyTorch ResNet18 model.")
 
@@ -44,7 +50,6 @@ if uploaded_file is not None:
     st.image(image, caption='Uploaded Image', use_column_width=True)
     
     st.write("🔍 Analyzing image...")
-    
     input_tensor = transform(image).unsqueeze(0)
     
     with torch.no_grad():
