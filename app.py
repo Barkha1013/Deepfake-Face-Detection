@@ -8,62 +8,71 @@ import gdown
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Deepfake Detector ✨",
+    page_title="Deepfake Intelligence | AI Shield",
     page_icon="🛡️",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- AESTHETIC CUSTOM CSS ---
+# --- CLASSY DARK-MODE CSS ---
 st.markdown("""
 <style>
-    /* Global Background & Font */
+    /* Dark Obsidian Background */
     .stApp {
-        background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        background: #0b0f19;
+        color: #f3f4f6;
         font-family: 'Inter', sans-serif;
     }
     
-    /* Main Title Styling */
+    /* Sleek Glowing Title */
     h1 {
-        color: #d87093;
+        color: #ffffff;
         text-align: center;
         font-weight: 800;
         letter-spacing: -0.5px;
-        padding-bottom: 0px;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding-bottom: 5px;
     }
     
-    /* Subtitle / Description */
+    /* Subtitle */
     p {
-        color: #6c757d;
+        color: #9ca3af;
         text-align: center;
         font-size: 1.05rem;
     }
 
-    /* File Uploader Box Styling */
+    /* Glassmorphism Upload Box */
     [data-testid="stFileUploader"] {
-        background-color: #ffffff;
-        border: 2px dashed #ffb6c1;
+        background: rgba(17, 24, 39, 0.7);
+        border: 1px solid rgba(99, 102, 241, 0.3);
         border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(255, 182, 193, 0.2);
+        padding: 25px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
     [data-testid="stFileUploader"]:hover {
-        border-color: #db7093;
+        border-color: rgba(168, 85, 247, 0.8);
+        box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
     }
 
-    /* Success / Error Result Boxes */
+    /* Cards / Metrics / Containers */
     .stSuccess, .stError {
-        border-radius: 15px;
-        padding: 15px;
+        background: rgba(17, 24, 39, 0.9);
+        border-radius: 16px;
+        padding: 20px;
         font-weight: 600;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
     
-    /* Center images */
-    .stImage {
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    /* Image Preview Frame */
+    .stImage img {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.6);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -74,7 +83,7 @@ MODEL_PATH = "deepfake_model.pth"
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        with st.spinner("🌸 Downloading model weights... Just a moment!"):
+        with st.spinner("⚡ Initializing Neural Weights... Please wait."):
             url = f"https://drive.google.com/uc?id={FILE_ID}"
             try:
                 gdown.download(url, MODEL_PATH, quiet=False)
@@ -104,8 +113,8 @@ transform = transforms.Compose([
 ])
 
 # --- APP UI HEADER ---
-st.markdown("<h1>🛡️ Deepfake Face Detector</h1>", unsafe_allow_html=True)
-st.markdown("<p>Upload a portrait image to analyze whether it's <b>Real</b> or <b>AI-Generated</b> with PyTorch ResNet18 ✨</p>", unsafe_allow_html=True)
+st.markdown("<h1>🛡️ Deepfake Intelligence Engine</h1>", unsafe_allow_html=True)
+st.markdown("<p>Advanced PyTorch ResNet18 biometric verification framework for real-time artifact detection.</p>", unsafe_allow_html=True)
 st.write("")
 
 # File Uploader
@@ -115,9 +124,9 @@ if uploaded_file is not None:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption='📸 Uploaded Portrait', use_column_width=True)
+        st.image(image, caption='Target Image Analysis', use_column_width=True)
         
-        with st.spinner("🔍 Running neural network analysis..."):
+        with st.spinner("🔍 Executing inference pass..."):
             input_tensor = transform(image).unsqueeze(0)
             
             with torch.no_grad():
@@ -131,6 +140,6 @@ if uploaded_file is not None:
         
         st.markdown("<br>", unsafe_allow_html=True)
         if result_class == "Real":
-            st.success(f"🌸 **Result: Authentic / Real Face** \n\nConfidence Score: **{conf_score:.2f}%**")
+            st.success(f"✦ **Verification Status: AUTHENTIC** \n\nConfidence: **{conf_score:.2f}%**")
         else:
-            st.error(f"⚠️ **Result: Deepfake / AI-Generated** \n\nConfidence Score: **{conf_score:.2f}%**")
+            st.error(f"✦ **Verification Status: DEEPFAKE DETECTED** \n\nConfidence: **{conf_score:.2f}%**")
