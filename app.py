@@ -6,7 +6,7 @@ from PIL import Image
 import os
 import urllib.request
 
-MODEL_URL = "https://github.com/Barkha1013/Deepfake-Face-Detection/releases/download/v1.0/deepfake_model.pth"
+MODEL_URL = "https://drive.google.com/file/d/1PUxOsAbMjrb8H5zZmRksWTcgzFzOiIfA/view?usp=sharing"
 MODEL_PATH = "deepfake_model.pth"
 
 # 1. Automatically download model if missing and load it
