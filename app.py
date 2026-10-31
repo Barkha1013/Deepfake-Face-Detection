@@ -90,7 +90,6 @@ def load_model():
             except Exception as e:
                 st.error(f"Download failed: {e}")
                 
-    # Initialize ResNet18 architecture
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
@@ -105,19 +104,16 @@ def load_model():
 
 model = load_model()
 
-# Preprocessing Transformations
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# --- APP UI HEADER ---
 st.markdown("<h1>🛡️ Deepfake Intelligence Engine</h1>", unsafe_allow_html=True)
 st.markdown("<p>Advanced PyTorch ResNet18 biometric verification framework for real-time artifact detection.</p>", unsafe_allow_html=True)
 st.write("")
 
-# File Uploader
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
@@ -140,6 +136,6 @@ if uploaded_file is not None:
         
         st.markdown("<br>", unsafe_allow_html=True)
         if result_class == "Real":
-            st.success(f"✦ **Verification Status: AUTHENTIC** \n\nConfidence: **{conf_score:.2f}%**")
+            st.success(f"✦ **Verification Status: REAL** \n\nConfidence: **{conf_score:.2f}%**")
         else:
-            st.error(f"✦ **Verification Status: DEEPFAKE DETECTED** \n\nConfidence: **{conf_score:.2f}%**")
+            st.error(f"✦ **Verification Status: FAKE** \n\nConfidence: **{conf_score:.2f}%**")
