@@ -4,29 +4,30 @@ import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
 import os
-import urllib.request
+import gdown
 
-MODEL_URL = "https://drive.google.com/uc?export=download&id=1PUxOsAbMjrb8H5zZmRksWTcgzFzOiIfA"
+FILE_ID = "1PUxOsAbMjrb8H5zZmRksWTcgzFzOiIfA"
 MODEL_PATH = "deepfake_model.pth"
 
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        with st.spinner("Downloading model weights... Please wait."):
+        with st.spinner("Downloading model weights from Google Drive... Please wait."):
+            url = f"https://drive.google.com/uc?id={FILE_ID}"
             try:
-                urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+                gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
             except Exception as e:
                 st.error(f"Download failed: {e}")
                 
-    # Initialize architecture
+    # Initialize ResNet18 architecture
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
     
     try:
-        model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu'), weights_only=False))
     except Exception as e:
-        st.error(f"Error loading model weights: {e}. The downloaded file might be corrupted or an HTML page.")
+        st.error(f"Error loading model weights: {e}")
         
     model.eval()
     return model
