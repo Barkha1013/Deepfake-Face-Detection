@@ -15,7 +15,7 @@ def load_model():
         with st.spinner("Downloading model weights from Google Drive... Please wait."):
             url = f"https://drive.google.com/uc?id={FILE_ID}"
             try:
-                gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
+                gdown.download(url, MODEL_PATH, quiet=False)
             except Exception as e:
                 st.error(f"Download failed: {e}")
                 
