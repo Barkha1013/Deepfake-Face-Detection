@@ -3,19 +3,24 @@ import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
-import cv2
-import numpy as np
+import os
+import urllib.request
 
-# 1. Load and Cache the ResNet18 Model
+MODEL_URL = "https://github.com/Barkha1013/Deepfake-Face-Detection/releases/download/v1.0/deepfake_model.pth"
+MODEL_PATH = "deepfake_model.pth"
+
+# 1. Automatically download model if missing and load it
 @st.cache_resource
 def load_model():
-    # Initialize ResNet18 architecture matching your training notebook
+    if not os.path.exists(MODEL_PATH):
+        with st.spinner("Downloading model weights from GitHub Release... Please wait."):
+            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+            
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
     
-    # Load your trained weights file
-    model.load_state_dict(torch.load("deepfake_model.pth", map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device('cpu')))
     model.eval()
     return model
 
@@ -35,27 +40,22 @@ st.write("Upload a facial image to check whether it is **Real** or a **Deepfake*
 uploaded_file = st.file_uploader("Choose a face image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # Display the uploaded image
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption='Uploaded Image', use_column_width=True)
     
     st.write("🔍 Analyzing image...")
     
-    # Preprocess and predict
-    input_tensor = transform(image).unsqueeze(0) # Add batch dimension
+    input_tensor = transform(image).unsqueeze(0)
     
     with torch.no_grad():
         outputs = model(input_tensor)
         probabilities = torch.nn.functional.softmax(outputs, dim=1)
         confidence, predicted = torch.max(probabilities, 1)
         
-    # Class mapping based on your training folder names
-    # Note: verify order of dataset.classes from your training notebook
     classes = ["Fake", "Real"]
     result_class = classes[predicted.item()]
     conf_score = confidence.item() * 100
     
-    # Display results
     st.markdown("---")
     if result_class == "Real":
         st.success(f"✅ Result: **Real Face** (Confidence: {conf_score:.2f}%)")
