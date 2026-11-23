@@ -180,7 +180,7 @@ if uploaded_file is not None:
       spread = abs(real_prob - fake_prob)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if spread < 12.0:
+    if spread < 4.0:
       st.warning(
           "✦ **Verification Status: UNCERTAIN** \n\n"
           f"Real: **{real_prob:.2f}%** | Fake: **{fake_prob:.2f}%** (Low"
