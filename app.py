@@ -19,14 +19,11 @@ st.set_page_config(
 # --- CLASSY DARK-MODE CSS ---
 st.markdown("""
 <style>
-    /* Dark Obsidian Background */
     .stApp {
         background: #0b0f19;
         color: #f3f4f6;
         font-family: 'Inter', sans-serif;
     }
-
-    /* Sleek Glowing Title */
     h1 {
         color: #ffffff;
         text-align: center;
@@ -37,15 +34,11 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         padding-bottom: 5px;
     }
-
-    /* Subtitle */
     p {
         color: #9ca3af;
         text-align: center;
         font-size: 1.05rem;
     }
-
-    /* Glassmorphism Upload Box */
     [data-testid="stFileUploader"] {
         background: rgba(17, 24, 39, 0.7);
         border: 1px solid rgba(99, 102, 241, 0.3);
@@ -58,8 +51,6 @@ st.markdown("""
         border-color: rgba(168, 85, 247, 0.8);
         box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
     }
-
-    /* Cards / Metrics / Containers */
     .stSuccess, .stError {
         background: rgba(17, 24, 39, 0.9);
         border-radius: 16px;
@@ -69,8 +60,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-
-    /* Image Preview Frame */
     .stImage img {
         border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -79,7 +68,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-FILE_ID = "14tpgC0bkDan9Z_wB5SxdO7RvhpmBNVuk"
+FILE_ID = "14tpgC0bkDan9Z_w85Sxd07Rvhpm8NVuk"
 MODEL_PATH = "deepfake_model.pth"
 
 
@@ -109,7 +98,7 @@ def load_model():
 
 
 def extract_face(pil_image):
-    """Detects and crops the largest face with a small margin for accurate deepfake inference."""
+    """Detects and crops the largest face with padding; falls back to full image safely."""
     try:
         if not hasattr(cv2, "data"):
             return pil_image
@@ -133,10 +122,7 @@ def extract_face(pil_image):
         if len(faces) == 0:
             return pil_image
 
-        # Pick the largest detected face
         x, y, w, h = max(faces, key=lambda rect: rect[2] * rect[3])
-
-        # Add 20% padding around the face
         pad_w = int(w * 0.2)
         pad_h = int(h * 0.2)
         x1 = max(0, x - pad_w)
@@ -174,7 +160,7 @@ if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Target Image Analysis", use_container_width=True)
 
-       with st.spinner("🔍 Detecting face & executing inference pass..."):
+        with st.spinner("🔍 Detecting face & executing inference pass..."):
             face_img = extract_face(image)
             input_tensor = transform(face_img).unsqueeze(0)
 
