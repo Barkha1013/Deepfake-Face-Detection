@@ -178,7 +178,7 @@ if uploaded_file is not None:
             face_img = extract_face(image)
             input_tensor = transform(face_img).unsqueeze(0)
 
-            with torch.no_grad():
+            
                with torch.no_grad():
                 outputs = model(input_tensor)
                 probs = torch.nn.functional.softmax(outputs, dim=1)[0]
@@ -188,7 +188,7 @@ if uploaded_file is not None:
             real_prob = probs[1].item() * 100
             top_conf = max(real_prob, fake_prob)
             result_class = "Real" if real_prob >= fake_prob else "Fake"
-            conf_score = confidence.item() * 100
+            
 
         st.markdown("<br>", unsafe_allow_html=True)
         if result_class == "Real":
