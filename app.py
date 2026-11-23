@@ -79,7 +79,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-FILE_ID = "1PUxOsAbMjrb8H5zZmRksWTcgzFzOiIfA"
+FILE_ID = "14tpgC0bkDan9Z_wB5SxdO7RvhpmBNVuk"
 MODEL_PATH = "deepfake_model.pth"
 
 
@@ -179,12 +179,15 @@ if uploaded_file is not None:
             input_tensor = transform(face_img).unsqueeze(0)
 
             with torch.no_grad():
+               with torch.no_grad():
                 outputs = model(input_tensor)
-                probabilities = torch.nn.functional.softmax(outputs, dim=1)
-                confidence, predicted = torch.max(probabilities, 1)
+                probs = torch.nn.functional.softmax(outputs, dim=1)[0]
 
-            classes = ["Real", "Fake"]
-            result_class = classes[predicted.item()]
+            # Index 0 = Fake ('training_fake'), Index 1 = Real ('training_real')
+            fake_prob = probs[0].item() * 100
+            real_prob = probs[1].item() * 100
+            top_conf = max(real_prob, fake_prob)
+            result_class = "Real" if real_prob >= fake_prob else "Fake"
             conf_score = confidence.item() * 100
 
         st.markdown("<br>", unsafe_allow_html=True)
