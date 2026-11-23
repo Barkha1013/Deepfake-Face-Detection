@@ -183,8 +183,7 @@ if uploaded_file is not None:
                 probabilities = torch.nn.functional.softmax(outputs, dim=1)
                 confidence, predicted = torch.max(probabilities, 1)
 
-            # PyTorch ImageFolder sorts alphabetically: 0 = Fake, 1 = Real
-            classes = ["Fake", "Real"]
+            classes = ["Real", "Fake"]
             result_class = classes[predicted.item()]
             conf_score = confidence.item() * 100
 
