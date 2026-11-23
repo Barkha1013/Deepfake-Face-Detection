@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
+import numpy as np
+import cv2
 import os
 import gdown
 
@@ -17,14 +19,11 @@ st.set_page_config(
 # --- CLASSY DARK-MODE CSS ---
 st.markdown("""
 <style>
-    /* Dark Obsidian Background */
     .stApp {
         background: #0b0f19;
         color: #f3f4f6;
         font-family: 'Inter', sans-serif;
     }
-    
-    /* Sleek Glowing Title */
     h1 {
         color: #ffffff;
         text-align: center;
@@ -35,15 +34,11 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         padding-bottom: 5px;
     }
-    
-    /* Subtitle */
     p {
         color: #9ca3af;
         text-align: center;
         font-size: 1.05rem;
     }
-
-    /* Glassmorphism Upload Box */
     [data-testid="stFileUploader"] {
         background: rgba(17, 24, 39, 0.7);
         border: 1px solid rgba(99, 102, 241, 0.3);
@@ -56,8 +51,6 @@ st.markdown("""
         border-color: rgba(168, 85, 247, 0.8);
         box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
     }
-
-    /* Cards / Metrics / Containers */
     .stSuccess, .stError {
         background: rgba(17, 24, 39, 0.9);
         border-radius: 16px;
@@ -67,8 +60,6 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    
-    /* Image Preview Frame */
     .stImage img {
         border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -102,6 +93,30 @@ def load_model():
     model.eval()
     return model
 
+def extract_face(pil_image):
+    """Detects and crops the largest face with a small margin for accurate deepfake inference."""
+    img_np = np.array(pil_image)
+    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
+    
+    if len(faces) == 0:
+        return pil_image, False  # Fallback to full image if no face detected
+        
+    # Pick the largest detected face
+    x, y, w, h = max(faces, key=lambda rect: rect[2] * rect[3])
+    
+    # Add 20% padding around the face (matches standard training datasets)
+    pad_w = int(w * 0.2)
+    pad_h = int(h * 0.2)
+    x1 = max(0, x - pad_w)
+    y1 = max(0, y - pad_h)
+    x2 = min(img_np.shape[1], x + w + pad_w)
+    y2 = min(img_np.shape[0], y + h + pad_h)
+    
+    cropped_face = Image.fromarray(img_np[y1:y2, x1:x2])
+    return cropped_face, True
+
 model = load_model()
 
 transform = transforms.Compose([
@@ -114,22 +129,27 @@ st.markdown("<h1>🛡️ Deepfake Intelligence Engine</h1>", unsafe_allow_html=T
 st.markdown("<p>Advanced PyTorch ResNet18 biometric verification framework for real-time artifact detection.</p>", unsafe_allow_html=True)
 st.write("")
 
-uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
 
 if uploaded_file is not None:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption='Target Image Analysis', use_column_width=True)
+        st.image(image, caption='Target Image Analysis', use_container_width=True)
         
-        with st.spinner("🔍 Executing inference pass..."):
-            input_tensor = transform(image).unsqueeze(0)
+        with st.spinner("🔍 Detecting face & executing inference pass..."):
+            face_img, face_found = extract_face(image)
+            if not face_found:
+                st.warning("⚠️ No clear face detected—analyzing full image (accuracy may be lower).")
+                
+            input_tensor = transform(face_img).unsqueeze(0)
             
             with torch.no_grad():
                 outputs = model(input_tensor)
                 probabilities = torch.nn.functional.softmax(outputs, dim=1)
                 confidence, predicted = torch.max(probabilities, 1)
                 
+            # PyTorch ImageFolder sorts alphabetically: 0 = Fake, 1 = Real
             classes = ["Fake", "Real"]
             result_class = classes[predicted.item()]
             conf_score = confidence.item() * 100
