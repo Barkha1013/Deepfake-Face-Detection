@@ -174,12 +174,11 @@ if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Target Image Analysis", use_container_width=True)
 
-        with st.spinner("🔍 Detecting face & executing inference pass..."):
+       with st.spinner("🔍 Detecting face & executing inference pass..."):
             face_img = extract_face(image)
             input_tensor = transform(face_img).unsqueeze(0)
 
-            
-               with torch.no_grad():
+            with torch.no_grad():
                 outputs = model(input_tensor)
                 probs = torch.nn.functional.softmax(outputs, dim=1)[0]
 
@@ -188,14 +187,15 @@ if uploaded_file is not None:
             real_prob = probs[1].item() * 100
             top_conf = max(real_prob, fake_prob)
             result_class = "Real" if real_prob >= fake_prob else "Fake"
-            
 
         st.markdown("<br>", unsafe_allow_html=True)
         if result_class == "Real":
             st.success(
-                f"✦ **Verification Status: REAL** \n\nConfidence: **{conf_score:.2f}%**"
+                f"✦ **Verification Status: REAL** \n\n"
+                f"Confidence: **{top_conf:.2f}%** (Real: {real_prob:.2f}% | Fake: {fake_prob:.2f}%)"
             )
         else:
             st.error(
-                f"✦ **Verification Status: FAKE** \n\nConfidence: **{conf_score:.2f}%**"
+                f"✦ **Verification Status: FAKE** \n\n"
+                f"Confidence: **{top_conf:.2f}%** (Real: {real_prob:.2f}% | Fake: {fake_prob:.2f}%)"
             )
