@@ -112,17 +112,17 @@ def extract_face(pil_image):
     """Detects and crops the largest face with a small margin for accurate deepfake inference."""
     try:
         if not hasattr(cv2, "data"):
-            return pil_image, False
+            return pil_image
 
         cascade_path = os.path.join(
             cv2.data.haarcascades, "haarcascade_frontalface_default.xml"
         )
         if not os.path.exists(cascade_path):
-            return pil_image, False
+            return pil_image
 
         face_cascade = cv2.CascadeClassifier(cascade_path)
         if face_cascade.empty():
-            return pil_image, False
+            return pil_image
 
         img_np = np.array(pil_image)
         gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
@@ -131,7 +131,7 @@ def extract_face(pil_image):
         )
 
         if len(faces) == 0:
-            return pil_image, False
+            return pil_image
 
         # Pick the largest detected face
         x, y, w, h = max(faces, key=lambda rect: rect[2] * rect[3])
@@ -144,10 +144,9 @@ def extract_face(pil_image):
         x2 = min(img_np.shape[1], x + w + pad_w)
         y2 = min(img_np.shape[0], y + h + pad_h)
 
-        cropped_face = Image.fromarray(img_np[y1:y2, x1:x2])
-        return cropped_face, True
+        return Image.fromarray(img_np[y1:y2, x1:x2])
     except Exception:
-        return pil_image, False
+        return pil_image
 
 
 model = load_model()
@@ -176,12 +175,7 @@ if uploaded_file is not None:
         st.image(image, caption="Target Image Analysis", use_container_width=True)
 
         with st.spinner("🔍 Detecting face & executing inference pass..."):
-            face_img, face_found = extract_face(image)
-            if not face_found:
-                st.warning(
-                    "⚠️ No clear face detected—analyzing full image (accuracy may be lower)."
-                )
-
+            face_img = extract_face(image)
             input_tensor = transform(face_img).unsqueeze(0)
 
             with torch.no_grad():
